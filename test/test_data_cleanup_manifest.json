@@ -1,0 +1,28 @@
+[
+  {
+    "collection": "orders",
+    "documentId": "MF-20260925-VZ0EJS",
+    "reason": "Automated test artifact from integration/e2e test suite (retailer: RET-SETTINGS-TEST-01, status: PLACED)",
+    "associatedRecords": {
+      "inventoryMovements": [
+        "OnLbmVhRIK2MbN0Ecyuf"
+      ],
+      "notifications": [
+        "notif_1790329794163_0lz4ci1",
+        "notif_1790329794603_8inxscy",
+        "notif_1790329795067_pfryn6m"
+      ],
+      "deliveryRecords": []
+    }
+  },
+  {
+    "collection": "products",
+    "documentId": "PROD-SETTINGS-TEST-TEA-01",
+    "reason": "Test catalog item created for test suite assertions (name: 'MR FUTKAR Classic Tea 500g', active: undefined)",
+    "associatedRecords": {
+      "inventoryMovements": [
+        "OnLbmVhRIK2MbN0Ecyuf"
+      ]
+    }
+  }
+]

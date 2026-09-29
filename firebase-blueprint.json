@@ -1,0 +1,851 @@
+{
+  "entities": {
+    "Retailer": {
+      "title": "Retailer",
+      "description": "Registered Kirana retailer profile",
+      "type": "object",
+      "properties": {
+        "retailerId": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "shopName": { "type": "string" },
+        "shopAddress": { "type": "string" },
+        "addressLine1": { "type": "string" },
+        "addressLine2": { "type": "string" },
+        "landmark": { "type": "string" },
+        "area": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "pincode": { "type": "string" },
+        "gstNumber": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "shopLocation": { "type": "object" },
+        "defaultAddressId": { "type": "string" },
+        "profilePhotoUrl": { "type": "string" },
+        "isProfileComplete": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["retailerId", "mobileNumber", "isProfileComplete"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "FMCG Wholesale Product with pricing slabs, MOQ and case sizes",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "productName": { "type": "string" },
+        "shortName": { "type": "string" },
+        "brandId": { "type": "string" },
+        "brandName": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "subcategoryId": { "type": "string" },
+        "subcategoryName": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "thumbnailUrl": { "type": "string" },
+        "mainImage": { "type": "string" },
+        "images": { "type": "array" },
+        "mrp": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "wholesalePrice": { "type": "number" },
+        "discountPercent": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "minimumOrderQuantity": { "type": "number" },
+        "unit": { "type": "string" },
+        "packSize": { "type": "string" },
+        "caseQuantity": { "type": "number" },
+        "priceSlabs": { "type": "array" },
+        "stockQuantity": { "type": "number" },
+        "stockUnit": { "type": "string" },
+        "isInStock": { "type": "boolean" },
+        "lowStockThreshold": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "isHotSelling": { "type": "boolean" },
+        "isTodaysDeal": { "type": "boolean" },
+        "isRecommended": { "type": "boolean" },
+        "isBuyAgainEligible": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "createdBy": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "warehouseName": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["productId", "sku", "productName", "mrp", "sellingPrice", "isActive"]
+    },
+    "Brand": {
+      "title": "Brand",
+      "description": "FMCG Manufacturer or brand",
+      "type": "object",
+      "properties": {
+        "brandId": { "type": "string" },
+        "brandName": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["brandId", "brandName", "isActive"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Hierarchical category classification",
+      "type": "object",
+      "properties": {
+        "categoryId": { "type": "string" },
+        "name": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "parentCategoryId": { "type": "string" },
+        "sortOrder": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["categoryId", "name", "isActive"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Wholesale procurement order with immutable price snapshot",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "retailerId": { "type": "string" },
+        "retailerName": { "type": "string" },
+        "shopName": { "type": "string" },
+        "items": { "type": "array" },
+        "deliveryAddress": { "type": "object" },
+        "warehouseId": { "type": "string" },
+        "warehouseName": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "schemeDiscount": { "type": "number" },
+        "deliveryCharge": { "type": "number" },
+        "tax": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "orderStatus": { "type": "string" },
+        "orderNotes": { "type": "string" },
+        "cancellationReason": { "type": "string" },
+        "cancelledAt": { "type": "string" },
+        "deliveryPartnerId": { "type": "string" },
+        "deliveryPartnerName": { "type": "string" },
+        "estimatedDeliveryTime": { "type": "string" },
+        "deliveryLatitude": { "type": "number" },
+        "deliveryLongitude": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["orderId", "retailerId", "grandTotal", "orderStatus", "paymentMethod", "items"]
+    },
+    "BusinessSettings": {
+      "title": "BusinessSettings",
+      "description": "Global wholesale operational settings, limits, and business configuration",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "legalName": { "type": "string" },
+        "supportPhone": { "type": "string" },
+        "supportEmail": { "type": "string" },
+        "businessAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "pincode": { "type": "string" },
+        "currency": { "type": "string" },
+        "timezone": { "type": "string" },
+        "minimumOrderValue": { "type": "number" },
+        "maximumOrderValue": { "type": "number" },
+        "allowOrderCancellation": { "type": "boolean" },
+        "cancellationAllowedStatuses": { "type": "array" },
+        "maxOrderItemsCount": { "type": "number" },
+        "defaultDeliveryCharge": { "type": "number" },
+        "freeDeliveryThreshold": { "type": "number" },
+        "defaultEstimatedDelivery": { "type": "string" },
+        "deliveryServiceAreas": { "type": "array" },
+        "allowCOD": { "type": "boolean" },
+        "allowUPI": { "type": "boolean" },
+        "allowOnlinePayment": { "type": "boolean" },
+        "minCodOrderValue": { "type": "number" },
+        "maxCodOrderValue": { "type": "number" },
+        "retailerRegistrationEnabled": { "type": "boolean" },
+        "defaultCreditLimit": { "type": "number" },
+        "requireGstinForRegistration": { "type": "boolean" },
+        "defaultProductMoq": { "type": "number" },
+        "defaultProductActive": { "type": "boolean" },
+        "defaultLowStockThreshold": { "type": "number" },
+        "maxProductImages": { "type": "number" },
+        "maxImageSizeBytes": { "type": "number" },
+        "allowedImageFormats": { "type": "array" },
+        "preventNegativeStock": { "type": "boolean" },
+        "stockWarningThreshold": { "type": "number" },
+        "pushNotificationsEnabled": { "type": "boolean" },
+        "inAppNotificationsEnabled": { "type": "boolean" },
+        "orderStatusNotifications": { "type": "boolean" },
+        "inventoryAlertsEnabled": { "type": "boolean" },
+        "defaultWarehouseId": { "type": "string" },
+        "defaultWarehouseName": { "type": "string" },
+        "dispatchCutoffTime": { "type": "string" },
+        "autoAssignDeliveryPartner": { "type": "boolean" },
+        "sessionTimeoutMinutes": { "type": "number" },
+        "maxFailedLoginAttempts": { "type": "number" },
+        "requireStrongPasswords": { "type": "boolean" },
+        "featureFlags": { "type": "object" },
+        "taxPercentage": { "type": "number" },
+        "version": { "type": "number" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["minimumOrderValue", "defaultDeliveryCharge", "freeDeliveryThreshold", "version"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Server-authoritative order and operational push/in-app status notification",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "notificationEventId": { "type": "string" },
+        "userId": { "type": "string" },
+        "retailerId": { "type": "string" },
+        "role": { "type": "string" },
+        "type": { "type": "string" },
+        "event": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "message": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "deepLink": { "type": "string" },
+        "read": { "type": "boolean" },
+        "isRead": { "type": "boolean" },
+        "deliveryStatus": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["notificationId", "userId", "title", "body", "event"]
+    },
+    "DeviceNotificationToken": {
+      "title": "DeviceNotificationToken",
+      "description": "FCM device push registration token for authenticated user",
+      "type": "object",
+      "properties": {
+        "tokenId": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string" },
+        "token": { "type": "string" },
+        "platform": { "type": "string" },
+        "deviceId": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "lastSeenAt": { "type": "string" }
+      },
+      "required": ["tokenId", "userId", "role", "token", "platform", "deviceId", "active"]
+    },
+    "Warehouse": {
+      "title": "Warehouse",
+      "description": "Distribution center fulfillment hub",
+      "type": "object",
+      "properties": {
+        "warehouseId": { "type": "string" },
+        "name": { "type": "string" },
+        "city": { "type": "string" },
+        "pincode": { "type": "string" },
+        "address": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "phone": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" }
+      },
+      "required": ["warehouseId", "name", "city", "isActive"]
+    },
+    "InventoryMovement": {
+      "title": "InventoryMovement",
+      "description": "Immutable stock audit record for warehouse inventory adjustments",
+      "type": "object",
+      "properties": {
+        "movementId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "sku": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "previousQuantity": { "type": "number" },
+        "adjustmentQuantity": { "type": "number" },
+        "newQuantity": { "type": "number" },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["movementId", "productId", "warehouseId", "previousQuantity", "adjustmentQuantity", "newQuantity", "reason", "timestamp"]
+    },
+    "ReturnRecord": {
+      "title": "ReturnRecord",
+      "description": "Kirana order returns and warehouse inspection records",
+      "type": "object",
+      "properties": {
+        "returnId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "retailerId": { "type": "string" },
+        "retailerName": { "type": "string" },
+        "shopName": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "sku": { "type": "string" },
+        "quantity": { "type": "number" },
+        "reason": { "type": "string" },
+        "returnStatus": { "type": "string" },
+        "inspectionStatus": { "type": "string" },
+        "inspectionNotes": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["returnId", "orderId", "retailerId", "productId", "quantity", "returnStatus", "warehouseId"]
+    },
+    "DeliveryPartner": {
+      "title": "DeliveryPartner",
+      "description": "Registered delivery fleet partner profile",
+      "type": "object",
+      "properties": {
+        "partnerId": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "mobile": { "type": "string" },
+        "alternateMobile": { "type": "string" },
+        "status": { "type": "string" },
+        "availabilityStatus": { "type": "string" },
+        "vehicleType": { "type": "string" },
+        "vehicleNumber": { "type": "string" },
+        "licenseNumber": { "type": "string" },
+        "assignedWarehouseId": { "type": "string" },
+        "assignedWarehouseName": { "type": "string" },
+        "serviceAreas": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["partnerId", "name", "mobile", "status", "assignedWarehouseId"]
+    },
+    "AdminAuditLog": {
+      "title": "AdminAuditLog",
+      "description": "Immutable super admin audit trails and action records",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string" },
+        "action": { "type": "string" },
+        "adminUid": { "type": "string" },
+        "adminName": { "type": "string" },
+        "targetType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "metadata": { "type": "object" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["logId", "action", "adminUid", "targetType", "timestamp"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Hierarchical Chart of Accounts ledger node with enforced normal balance",
+      "type": "object",
+      "properties": {
+        "accountId": { "type": "string" },
+        "accountCode": { "type": "string" },
+        "accountName": { "type": "string" },
+        "accountType": { "type": "string", "enum": ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"] },
+        "parentAccountId": { "type": "string" },
+        "normalBalance": { "type": "string", "enum": ["DEBIT", "CREDIT"] },
+        "isSystemAccount": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["accountId", "accountCode", "accountName", "accountType", "normalBalance", "isSystemAccount", "isActive", "createdBy", "updatedBy"]
+    },
+    "AccountingPeriod": {
+      "title": "AccountingPeriod",
+      "description": "Fiscal accounting period boundary",
+      "type": "object",
+      "properties": {
+        "periodId": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["OPEN", "CLOSED"] },
+        "createdAt": { "type": "string" },
+        "closedAt": { "type": "string" },
+        "closedBy": { "type": "string" }
+      },
+      "required": ["periodId", "startDate", "endDate", "status", "createdAt"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "Authoritative double-entry bookkeeping journal voucher header",
+      "type": "object",
+      "properties": {
+        "journalId": { "type": "string" },
+        "journalNumber": { "type": "string" },
+        "journalDate": { "type": "string" },
+        "voucherType": { "type": "string" },
+        "referenceType": { "type": "string" },
+        "referenceId": { "type": "string" },
+        "narration": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "POSTED", "REVERSED"] },
+        "totalDebit": { "type": "number" },
+        "totalCredit": { "type": "number" },
+        "createdBy": { "type": "string" },
+        "postedBy": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "postedAt": { "type": "string" },
+        "reversalOfJournalId": { "type": "string" }
+      },
+      "required": ["journalId", "journalDate", "status", "totalDebit", "totalCredit", "createdBy", "createdAt"]
+    },
+    "JournalEntryLine": {
+      "title": "JournalEntryLine",
+      "description": "Individual debit/credit transaction line with authoritative account snapshot",
+      "type": "object",
+      "properties": {
+        "lineId": { "type": "string" },
+        "journalId": { "type": "string" },
+        "accountId": { "type": "string" },
+        "accountCodeSnapshot": { "type": "string" },
+        "accountNameSnapshot": { "type": "string" },
+        "debit": { "type": "number" },
+        "credit": { "type": "number" },
+        "description": { "type": "string" },
+        "customerId": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "productId": { "type": "string" },
+        "lineNumber": { "type": "number" }
+      },
+      "required": ["lineId", "journalId", "accountId", "accountCodeSnapshot", "accountNameSnapshot", "debit", "credit", "lineNumber"]
+    },
+    "AccountingSequence": {
+      "title": "AccountingSequence",
+      "description": "Sequential transaction and voucher number generator",
+      "type": "object",
+      "properties": {
+        "sequenceId": { "type": "string" },
+        "sequenceType": { "type": "string" },
+        "currentValue": { "type": "number" },
+        "prefix": { "type": "string" },
+        "padding": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["sequenceId", "sequenceType", "currentValue", "prefix", "padding"]
+    },
+    "SalesInvoice": {
+      "title": "SalesInvoice",
+      "description": "Authoritative Sales Invoice with customer address and product snapshots, lifecycle state machine, and sequential numbering",
+      "type": "object",
+      "properties": {
+        "invoiceId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "invoiceDate": { "type": "string" },
+        "invoiceStatus": { "type": "string", "enum": ["DRAFT", "ISSUED", "CANCELLED"] },
+        "customerId": { "type": "string" },
+        "customerType": { "type": "string" },
+        "sourceOrderId": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "billingAddressSnapshot": { "type": "object" },
+        "shippingAddressSnapshot": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discountTotal": { "type": "number" },
+        "taxableTotal": { "type": "number" },
+        "taxTotal": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paymentStatus": { "type": "string" },
+        "accountingStatus": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "version": { "type": "number" },
+        "idempotencyKey": { "type": "string" }
+      },
+      "required": ["invoiceId", "invoiceNumber", "invoiceDate", "invoiceStatus", "customerId", "items", "grandTotal", "createdAt", "createdBy"]
+    },
+    "PurchaseInvoice": {
+      "title": "PurchaseInvoice",
+      "description": "Authoritative Purchase Invoice with supplier linkage, warehouse receiving address snapshot, and sequential numbering",
+      "type": "object",
+      "properties": {
+        "invoiceId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "invoiceDate": { "type": "string" },
+        "invoiceStatus": { "type": "string", "enum": ["DRAFT", "POSTED", "CANCELLED"] },
+        "supplierId": { "type": "string" },
+        "supplierType": { "type": "string" },
+        "supplierInvoiceNumber": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "billingAddressSnapshot": { "type": "object" },
+        "shippingAddressSnapshot": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discountTotal": { "type": "number" },
+        "taxableTotal": { "type": "number" },
+        "taxTotal": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paymentStatus": { "type": "string" },
+        "accountingStatus": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "version": { "type": "number" },
+        "idempotencyKey": { "type": "string" }
+      },
+      "required": ["invoiceId", "invoiceNumber", "invoiceDate", "invoiceStatus", "items", "grandTotal", "createdAt", "createdBy"]
+    },
+    "InvoiceSequence": {
+      "title": "InvoiceSequence",
+      "description": "Sequential year-scoped invoice number counter for sales and purchase invoices",
+      "type": "object",
+      "properties": {
+        "sequenceId": { "type": "string" },
+        "invoiceType": { "type": "string", "enum": ["SALES", "PURCHASE"] },
+        "currentValue": { "type": "number" },
+        "prefix": { "type": "string" },
+        "year": { "type": "number" },
+        "padding": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["sequenceId", "invoiceType", "currentValue", "prefix", "year", "padding"]
+    },
+    "CreditDebitNote": {
+      "title": "CreditDebitNote",
+      "description": "Controlled Credit Note and Debit Note document with frozen historical snapshots",
+      "type": "object",
+      "properties": {
+        "noteId": { "type": "string" },
+        "noteNumber": { "type": "string" },
+        "noteType": { "type": "string", "enum": ["SALES_CREDIT_NOTE", "SALES_DEBIT_NOTE", "PURCHASE_CREDIT_NOTE", "PURCHASE_DEBIT_NOTE"] },
+        "status": { "type": "string", "enum": ["DRAFT", "POSTED", "CANCELLED"] },
+        "originalInvoiceId": { "type": "string" },
+        "originalInvoiceNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "reason": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discountTotal": { "type": "number" },
+        "taxableTotal": { "type": "number" },
+        "taxTotal": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "accountingStatus": { "type": "string", "enum": ["NOT_POSTED", "POSTED"] },
+        "accountingJournalId": { "type": "string" },
+        "accountingVoucherNumber": { "type": "string" },
+        "accountingPostedAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "version": { "type": "number" },
+        "idempotencyKey": { "type": "string" }
+      },
+      "required": ["noteId", "noteNumber", "noteType", "status", "originalInvoiceId", "originalInvoiceNumber", "reason", "items", "grandTotal", "createdAt", "createdBy"]
+    },
+    "CustomerReceipt": {
+      "title": "CustomerReceipt",
+      "description": "Double-entry customer money receipt with immutable snapshots and integer-paise accounting",
+      "type": "object",
+      "properties": {
+        "receiptId": { "type": "string" },
+        "receiptNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerSnapshot": { "type": "object" },
+        "receiptDate": { "type": "string" },
+        "amountPaise": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "cashBankAccountCode": { "type": "string" },
+        "cashBankAccountInfo": { "type": "object" },
+        "referenceNumber": { "type": "string" },
+        "notes": { "type": "string" },
+        "allocations": { "type": "array" },
+        "unallocatedAmountPaise": { "type": "number" },
+        "status": { "type": "string" },
+        "journalId": { "type": "string" },
+        "voucherNumber": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "postedAt": { "type": "string" },
+        "reversedAt": { "type": "string" },
+        "reversalJournalId": { "type": "string" },
+        "idempotencyKey": { "type": "string" },
+        "sourceOrderId": { "type": "string" },
+        "codCollectionId": { "type": "string" },
+        "version": { "type": "number" }
+      },
+      "required": ["receiptId", "receiptNumber", "customerId", "customerSnapshot", "receiptDate", "amountPaise", "paymentMethod", "cashBankAccountCode", "status", "createdBy", "createdAt"]
+    },
+    "SupplierPayment": {
+      "title": "SupplierPayment",
+      "description": "Double-entry supplier payment with immutable snapshots and integer-paise accounting",
+      "type": "object",
+      "properties": {
+        "paymentId": { "type": "string" },
+        "paymentNumber": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "supplierSnapshot": { "type": "object" },
+        "paymentDate": { "type": "string" },
+        "amountPaise": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "cashBankAccountCode": { "type": "string" },
+        "cashBankAccountInfo": { "type": "object" },
+        "referenceNumber": { "type": "string" },
+        "notes": { "type": "string" },
+        "allocations": { "type": "array" },
+        "allocatedAmountPaise": { "type": "number" },
+        "unallocatedAmountPaise": { "type": "number" },
+        "allocationStatus": { "type": "string" },
+        "status": { "type": "string" },
+        "accountingStatus": { "type": "string" },
+        "journalId": { "type": "string" },
+        "voucherNumber": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "postedAt": { "type": "string" },
+        "reversedAt": { "type": "string" },
+        "reversedBy": { "type": "string" },
+        "reversalJournalId": { "type": "string" },
+        "reversalReason": { "type": "string" },
+        "idempotencyKey": { "type": "string" },
+        "version": { "type": "number" }
+      },
+      "required": ["paymentId", "paymentNumber", "supplierId", "paymentDate", "amountPaise", "paymentMethod", "cashBankAccountCode", "status", "createdBy", "createdAt"]
+    },
+    "CODCollectionRecord": {
+      "type": "object",
+      "properties": {
+        "collectionId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "retailerId": { "type": "string" },
+        "deliveryPartnerId": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "amountDuePaise": { "type": "number" },
+        "amountCollectedPaise": { "type": "number" },
+        "currency": { "type": "string" },
+        "collectionStatus": { "type": "string" },
+        "collectedAt": { "type": "string" },
+        "collectedBy": { "type": "string" },
+        "referenceId": { "type": "string" },
+        "customerReceiptId": { "type": "string" },
+        "customerReceiptNumber": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["collectionId", "orderId", "retailerId", "deliveryPartnerId", "warehouseId", "paymentMethod", "amountDuePaise", "amountCollectedPaise", "collectionStatus", "collectedAt", "collectedBy"]
+    },
+    "DeliveryPartnerCustody": {
+      "type": "object",
+      "properties": {
+        "partnerId": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "cashBalancePaise": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["partnerId", "warehouseId", "cashBalancePaise"]
+    },
+    "DeliveryCustodyMovement": {
+      "type": "object",
+      "properties": {
+        "movementId": { "type": "string" },
+        "partnerId": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "collectionId": { "type": "string" },
+        "movementType": { "type": "string" },
+        "amountPaise": { "type": "number" },
+        "balanceAfterPaise": { "type": "number" },
+        "timestamp": { "type": "string" },
+        "referenceId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["movementId", "warehouseId", "movementType", "amountPaise", "balanceAfterPaise", "timestamp", "createdBy"]
+    },
+    "CODHandoverRecord": {
+      "type": "object",
+      "properties": {
+        "handoverId": { "type": "string" },
+        "deliveryPartnerId": { "type": "string" },
+        "deliveryPartnerName": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "destinationType": { "type": "string" },
+        "destinationId": { "type": "string" },
+        "status": { "type": "string" },
+        "requestedAmountPaise": { "type": "number" },
+        "acceptedAmountPaise": { "type": "number" },
+        "discrepancyAmountPaise": { "type": "number" },
+        "collectionIds": { "type": "array", "items": { "type": "string" } },
+        "orderIds": { "type": "array", "items": { "type": "string" } },
+        "submittedAt": { "type": "string" },
+        "submittedBy": { "type": "string" },
+        "acceptedAt": { "type": "string" },
+        "acceptedBy": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["handoverId", "deliveryPartnerId", "warehouseId", "destinationType", "status", "requestedAmountPaise", "submittedAt", "submittedBy", "createdAt", "updatedAt"]
+    },
+    "WarehouseCashCustody": {
+      "type": "object",
+      "properties": {
+        "warehouseId": { "type": "string" },
+        "cashBalancePaise": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["warehouseId", "cashBalancePaise"]
+    },
+    "AdminCashCustody": {
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "cashBalancePaise": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["adminId", "cashBalancePaise"]
+    }
+  },
+  "firestore": {
+    "/retailers/{retailerId}": {
+      "schema": { "$ref": "#/entities/Retailer" },
+      "description": "Retailer profiles indexed by Firebase Auth UID"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Wholesale product catalog"
+    },
+    "/brands/{brandId}": {
+      "schema": { "$ref": "#/entities/Brand" },
+      "description": "FMCG Brand directory"
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Taxonomy hierarchy"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Wholesale orders with frozen accounting snapshots"
+    },
+    "/businessSettings/{settingsId}": {
+      "schema": { "$ref": "#/entities/BusinessSettings" },
+      "description": "Global wholesale operational settings"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Server-authoritative retailer and operational notifications"
+    },
+    "/notificationTokens/{tokenId}": {
+      "schema": { "$ref": "#/entities/DeviceNotificationToken" },
+      "description": "Authenticated user device push notification tokens"
+    },
+    "/warehouses/{warehouseId}": {
+      "schema": { "$ref": "#/entities/Warehouse" },
+      "description": "Fulfillment hubs"
+    },
+    "/inventoryMovements/{movementId}": {
+      "schema": { "$ref": "#/entities/InventoryMovement" },
+      "description": "Immutable stock movement audit trail for warehouse inventory"
+    },
+    "/returns/{returnId}": {
+      "schema": { "$ref": "#/entities/ReturnRecord" },
+      "description": "Warehouse order returns and inspection records"
+    },
+    "/deliveryPartners/{partnerId}": {
+      "schema": { "$ref": "#/entities/DeliveryPartner" },
+      "description": "Registered delivery fleet partners"
+    },
+    "/deliveryAuditLogs/{logId}": {
+      "description": "Immutable delivery dispatch and live tracking audit logs"
+    },
+    "/productPricing/{ruleId}": {
+      "schema": { "$ref": "#/entities/ProductPricingRule" },
+      "description": "Customer-specific and volume pricing rules"
+    },
+    "/adminAuditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AdminAuditLog" },
+      "description": "Immutable administrative audit event trail"
+    },
+    "/chartOfAccounts/{accountId}": {
+      "schema": { "$ref": "#/entities/Account" },
+      "description": "Master Chart of Accounts with strict server-authoritative mutations"
+    },
+    "/accountingPeriods/{periodId}": {
+      "schema": { "$ref": "#/entities/AccountingPeriod" },
+      "description": "Fiscal accounting period boundaries"
+    },
+    "/journalEntries/{entryId}": {
+      "schema": { "$ref": "#/entities/JournalEntry" },
+      "description": "Double-entry journal transaction headers"
+    },
+    "/journalEntryLines/{lineId}": {
+      "schema": { "$ref": "#/entities/JournalEntryLine" },
+      "description": "Individual debit/credit transaction line items"
+    },
+    "/accountingSequences/{sequenceId}": {
+      "schema": { "$ref": "#/entities/AccountingSequence" },
+      "description": "Sequential journal voucher counter"
+    },
+    "/salesInvoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/SalesInvoice" },
+      "description": "Authoritative Sales Invoices with snapshots and state machine"
+    },
+    "/purchaseInvoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/PurchaseInvoice" },
+      "description": "Authoritative Purchase Invoices with supplier linkage"
+    },
+    "/invoiceSequences/{sequenceId}": {
+      "schema": { "$ref": "#/entities/InvoiceSequence" },
+      "description": "Sequential sales and purchase invoice counter"
+    },
+    "/creditDebitNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/CreditDebitNote" },
+      "description": "Authoritative Credit and Debit Notes with double-entry accounting integration"
+    },
+    "/customerReceipts/{receiptId}": {
+      "schema": { "$ref": "#/entities/CustomerReceipt" },
+      "description": "Authoritative Customer Receipts with double-entry accounting foundation"
+    },
+    "/supplierPayments/{paymentId}": {
+      "schema": { "$ref": "#/entities/SupplierPayment" },
+      "description": "Authoritative Supplier Payments with double-entry accounting foundation"
+    },
+    "/codCollections/{collectionId}": {
+      "schema": { "$ref": "#/entities/CODCollectionRecord" },
+      "description": "Operational COD collection records from delivery handovers"
+    },
+    "/deliveryPartnerCustody/{partnerId}": {
+      "schema": { "$ref": "#/entities/DeliveryPartnerCustody" },
+      "description": "Current physical cash custody balance per delivery partner"
+    },
+    "/deliveryCustodyMovements/{movementId}": {
+      "schema": { "$ref": "#/entities/DeliveryCustodyMovement" },
+      "description": "Audit trail of physical cash custody movements and handovers"
+    },
+    "/codHandovers/{handoverId}": {
+      "schema": { "$ref": "#/entities/CODHandoverRecord" },
+      "description": "Operational COD handover requests and acceptance records"
+    },
+    "/warehouseCashCustody/{warehouseId}": {
+      "schema": { "$ref": "#/entities/WarehouseCashCustody" },
+      "description": "Operational physical cash custody balance per warehouse hub"
+    },
+    "/adminCashCustody/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminCashCustody" },
+      "description": "Operational physical cash custody balance per admin recipient"
+    }
+  }
+}

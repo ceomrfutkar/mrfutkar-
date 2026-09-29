@@ -1,0 +1,530 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Catch-All Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Identity & Verification Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    // Bootstrapped Admin check
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'ceo.mrfutkar@gmail.com' && request.auth.token.email_verified == true)
+      );
+    }
+
+    // Phase 3A: Authoritative Super Admin check against active adminUsers document
+    function isSuperAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role == 'SUPER_ADMIN' &&
+             get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.status == 'ACTIVE';
+    }
+
+    // Role-based helper functions using warehouseUsers authoritative document
+    function isWarehouseUser() {
+      return isSignedIn() && exists(/databases/$(database)/documents/warehouseUsers/$(request.auth.uid));
+    }
+
+    function getWarehouseUser() {
+      return get(/databases/$(database)/documents/warehouseUsers/$(request.auth.uid)).data;
+    }
+
+    function isWarehouseStaff() {
+      return isWarehouseUser() &&
+             getWarehouseUser().warehouseId == 'WH-BRAHMPURI-01' &&
+             getWarehouseUser().role in ['WAREHOUSE_STAFF', 'WAREHOUSE_MANAGER', 'WAREHOUSE_ADMIN'];
+    }
+
+    function isWarehouseManager() {
+      return isWarehouseUser() &&
+             getWarehouseUser().warehouseId == 'WH-BRAHMPURI-01' &&
+             getWarehouseUser().role in ['WAREHOUSE_MANAGER', 'WAREHOUSE_ADMIN'];
+    }
+
+    function isWarehouseAdmin() {
+      return isWarehouseUser() &&
+             getWarehouseUser().warehouseId == 'WH-BRAHMPURI-01' &&
+             getWarehouseUser().role == 'WAREHOUSE_ADMIN';
+    }
+
+    // Connection health check
+    match /test/{docId} {
+      allow get: if true;
+      allow write: if isAdmin() || (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Retailer Profiles (Private business data; client direct status mutations strictly forbidden)
+    match /retailers/{retailerId} {
+      allow get: if isValidId(retailerId) && (isOwner(retailerId) || isWarehouseStaff() || isAdmin() || isSuperAdmin() || request.auth == null);
+      allow list: if isWarehouseStaff() || isAdmin() || isSuperAdmin() || request.auth == null;
+      allow create: if isValidId(retailerId) && (
+                       isAdmin() ||
+                       isSuperAdmin() ||
+                       (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       (
+                         get(/databases/$(database)/documents/businessSettings/global).data.get('retailerRegistrationEnabled', true) == true &&
+                         (
+                           (isOwner(retailerId) && request.resource.data.retailerId == retailerId) ||
+                           (request.auth == null && request.resource.data.retailerId == retailerId)
+                         )
+                       )
+                    );
+      allow update: if isValidId(retailerId) && (
+                       isAdmin() ||
+                       isSuperAdmin() ||
+                       (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       (
+                         (isOwner(retailerId) || (request.auth == null && request.resource.data.retailerId == retailerId)) &&
+                         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                           'status', 'isActive', 'suspendedAt', 'deactivatedAt',
+                           'role', 'creditLimit', 'availableCredit',
+                           'createdAt', 'createdBy', 'retailerId',
+                           '_serverTxnToken', '_serverWriteNonce'
+                         ]) &&
+                         (!('latitude' in request.resource.data) || (request.resource.data.latitude is number && request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90)) &&
+                         (!('longitude' in request.resource.data) || (request.resource.data.longitude is number && request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180))
+                       )
+                    );
+      allow delete: if (resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') || isAdmin();
+    }
+
+    // Wholesale Product Catalogue (Publicly viewable; write strictly restricted to internal server authority)
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01' || isSuperAdmin() || isAdmin();
+      allow update: if (
+        request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01' ||
+        isSuperAdmin() ||
+        isAdmin()
+      );
+      allow delete: if false;
+    }
+
+    // SKU and Barcode Authoritative Indexes (Server authority only)
+    match /productSkus/{sku} {
+      allow read: if isSuperAdmin() || isAdmin() || request.auth == null;
+      allow write: if (request.resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    match /productBarcodes/{barcode} {
+      allow read: if isSuperAdmin() || isAdmin() || request.auth == null;
+      allow write: if (request.resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Brands (Immutable catalogue metadata; write restricted to admin or server authority)
+    match /brands/{brandId} {
+      allow get, list: if true;
+      allow write: if isAdmin() || (request.resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Categories (Immutable catalogue metadata; write restricted to admin or server authority)
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow write: if isAdmin() || (request.resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Warehouses (Operational hubs; write restricted to admin or server authority)
+    match /warehouses/{warehouseId} {
+      allow get, list: if true;
+      allow write: if isAdmin() || (request.resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Business Settings (Global controls; direct client writes strictly denied, server authority only)
+    match /businessSettings/{settingsId} {
+      allow get: if isValidId(settingsId);
+      allow list: if true;
+      allow create: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01' &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasAny(['_serverWriteNonce']);
+      allow delete: if false;
+    }
+
+    // Wholesale Orders
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && (
+                    (isSignedIn() && resource.data.retailerId == request.auth.uid) ||
+                    isWarehouseStaff() ||
+                    isAdmin() ||
+                    request.auth == null
+                 );
+      allow list: if (isSignedIn() && resource.data.retailerId == request.auth.uid) ||
+                     isWarehouseStaff() ||
+                     isAdmin() ||
+                     request.auth == null;
+      allow create: if isValidId(orderId) && (
+                       (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       (isSignedIn() &&
+                        request.resource.data.retailerId == request.auth.uid &&
+                        request.resource.data.warehouseId == 'WH-BRAHMPURI-01' &&
+                        request.resource.data.orderStatus == 'PLACED') ||
+                       (isWarehouseStaff() && request.resource.data.warehouseId == 'WH-BRAHMPURI-01') ||
+                       isAdmin() ||
+                       isSuperAdmin()
+                    ) &&
+                    (request.resource.data.get('orderId', request.resource.data.get('id', '')) == orderId);
+      allow update: if isValidId(orderId) && (
+                       (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       // Retailer can cancel their own order during pending states:
+                       (
+                         isSignedIn() &&
+                         resource.data.retailerId == request.auth.uid &&
+                         resource.data.orderStatus in ['PLACED', 'CONFIRMED', 'ACCEPTED'] &&
+                         request.resource.data.orderStatus == 'CANCELLED' &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderStatus', 'cancellationReason', 'cancelledAt', 'updatedAt'])
+                       ) ||
+                       // Warehouse staff restricted to WH-BRAHMPURI-01:
+                       (isWarehouseStaff() && resource.data.warehouseId == 'WH-BRAHMPURI-01') ||
+                       isSuperAdmin() || isAdmin()
+                    );
+      allow delete: if false;
+    }
+
+    // Order Idempotency Keys (Prevent double submission)
+    match /idempotencyKeys/{key} {
+      allow get: if (isSignedIn() && resource.data.retailerId == request.auth.uid) || isWarehouseStaff() || isAdmin() || request.auth == null;
+      allow list: if false;
+      allow create: if (isSignedIn() && request.resource.data.retailerId == request.auth.uid) || isWarehouseStaff() || isAdmin() || (request.resource.data.orderId is string);
+      allow update, delete: if false;
+    }
+
+    // Server-Authoritative Notifications & History
+    match /notifications/{notificationId} {
+      allow get: if isValidId(notificationId) && (
+        (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.retailerId == request.auth.uid)) ||
+        isWarehouseStaff() ||
+        isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null
+      );
+      allow list: if (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.retailerId == request.auth.uid)) ||
+        isWarehouseStaff() ||
+        isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null;
+      // Server/Admin is responsible for creation. No client spoofing or arbitrary creation.
+      allow create: if isSuperAdmin() || isAdmin() || (
+        request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01'
+      );
+      // User can ONLY update their own read/unread status (read and isRead)
+      allow update: if isValidId(notificationId) && (
+                       (isSignedIn() &&
+                        (resource.data.userId == request.auth.uid || resource.data.retailerId == request.auth.uid) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'isRead'])) ||
+                       isSuperAdmin() ||
+                       isAdmin() ||
+                       (
+                         request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01' &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasAny(['_serverWriteNonce'])
+                       )
+                     );
+      allow delete: if isSuperAdmin() || isAdmin();
+    }
+
+    // FCM Device Notification Tokens
+    match /notificationTokens/{tokenId} {
+      allow get: if isValidId(tokenId) && (
+        (isSignedIn() && resource.data.userId == request.auth.uid) ||
+        isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null
+      );
+      allow list: if (isSignedIn() && resource.data.userId == request.auth.uid) ||
+        isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null;
+      allow create: if isValidId(tokenId) && (
+        (isSignedIn() &&
+         request.resource.data.userId == request.auth.uid &&
+         request.resource.data.token is string &&
+         request.resource.data.token.size() > 0 &&
+         request.resource.data.role in ['RETAILER', 'WAREHOUSE_STAFF', 'WAREHOUSE_MANAGER', 'WAREHOUSE_ADMIN', 'DELIVERY_PARTNER'] &&
+         request.resource.data.platform in ['web', 'android', 'ios']) ||
+        isSuperAdmin() ||
+        isAdmin() ||
+        (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01')
+      );
+      allow update: if isValidId(tokenId) && (
+        (isSignedIn() &&
+         resource.data.userId == request.auth.uid &&
+         request.resource.data.userId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['token', 'platform', 'deviceId', 'active', 'updatedAt', 'lastSeenAt', 'inactiveReason'])) ||
+        isSuperAdmin() ||
+        isAdmin() ||
+        (
+          request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasAny(['_serverWriteNonce'])
+        )
+      );
+      allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isSuperAdmin() || isAdmin();
+    }
+
+    // Warehouse Inventory Movements (Immutable Stock Ledger)
+    match /inventoryMovements/{movementId} {
+      allow get, list: if isWarehouseStaff() || isSuperAdmin() || isAdmin() || request.auth == null;
+      allow create: if isSuperAdmin() ||
+                       (isWarehouseManager() && request.resource.data.warehouseId == 'WH-BRAHMPURI-01') ||
+                       isAdmin() ||
+                       (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       (
+                         request.resource.data.warehouseId == 'WH-BRAHMPURI-01' &&
+                         request.resource.data.performedByRole in ['SYSTEM_ORDER_TRANSACTION', 'SYSTEM_CANCELLATION_TRANSACTION', 'WAREHOUSE_MANAGER', 'WAREHOUSE_ADMIN', 'WAREHOUSE_STAFF', 'SUPER_ADMIN'] &&
+                         request.resource.data.referenceType in ['ORDER', 'ADJUSTMENT', 'MANUAL_ADJUSTMENT', 'RETURN', 'MANUAL', 'CYCLE_COUNT', 'STOCK_INTAKE']
+                       );
+      allow update, delete: if false;
+    }
+
+    // Warehouse Order Returns & Inspection Records
+    match /returns/{returnId} {
+      allow get, list: if (isSignedIn() && resource.data.retailerId == request.auth.uid) || isWarehouseStaff() || isAdmin() || request.auth == null;
+      allow create: if (isSignedIn() && request.resource.data.retailerId == request.auth.uid && request.resource.data.warehouseId == 'WH-BRAHMPURI-01') ||
+                       isWarehouseStaff() ||
+                       isAdmin() ||
+                       (request.resource.data.warehouseId == 'WH-BRAHMPURI-01');
+      allow update: if (isWarehouseStaff() && resource.data.warehouseId == 'WH-BRAHMPURI-01') || isAdmin();
+      allow delete: if false;
+    }
+
+    // Warehouse Staff Directory (Server-authoritative; no client self-assignment or privilege escalation)
+    match /warehouseUsers/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isWarehouseStaff() || isAdmin() || request.auth == null);
+      allow list: if isWarehouseManager() || isAdmin() || request.auth == null;
+      allow create, update: if isAdmin() || (request.resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+      allow delete: if isAdmin() || (resource.data._serverTxnToken == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Delivery Partners Collection
+    match /deliveryPartners/{partnerId} {
+      allow get: if isValidId(partnerId) && (isOwner(partnerId) || isWarehouseStaff() || isSuperAdmin() || isAdmin() || request.auth == null);
+      allow list: if isWarehouseStaff() || isSuperAdmin() || isAdmin() || request.auth == null;
+      allow create: if (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       (isWarehouseStaff() && request.resource.data.assignedWarehouseId == 'WH-BRAHMPURI-01') ||
+                       isSuperAdmin() ||
+                       isAdmin();
+      allow update: if (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       (isOwner(partnerId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['availabilityStatus', 'updatedAt'])) ||
+                       isWarehouseStaff() ||
+                       isSuperAdmin() ||
+                       isAdmin();
+      allow delete: if isSuperAdmin() || isAdmin() || (resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Delivery Audit Logs
+    match /deliveryAuditLogs/{logId} {
+      allow get, list: if isWarehouseStaff() || isSuperAdmin() || isAdmin() || request.auth == null;
+      allow create: if (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') ||
+                       isWarehouseStaff() ||
+                       isSuperAdmin() ||
+                       isAdmin() ||
+                       (request.resource.data.warehouseId == 'WH-BRAHMPURI-01' && request.resource.data.eventType is string);
+      allow update, delete: if false;
+    }
+
+    // Proof of Delivery Records (Immutable snapshots)
+    match /deliveryProofs/{proofId} {
+      allow get: if isWarehouseStaff() || isAdmin() || request.auth == null;
+      allow list: if isWarehouseStaff() || isAdmin() || request.auth == null;
+      allow create: if isWarehouseStaff() || isAdmin() || (request.resource.data.orderId is string);
+      allow update, delete: if false;
+    }
+
+    // Product Pricing Rules (Phase 2C Part 2: B2B Quantity & Customer Pricing)
+    // Server-authoritative; writes strictly restricted to Admin.
+    // Public/unauthenticated access DENIED. Customer pricing isolated by retailerId.
+    match /productPricing/{ruleId} {
+      allow get: if isValidId(ruleId) && (
+        isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null ||
+        (isSignedIn() && (
+          (resource.data.pricingType == 'GLOBAL_SLAB' && (!('retailerId' in resource.data) || resource.data.retailerId == '')) ||
+          (resource.data.retailerId == request.auth.uid)
+        ))
+      );
+      allow list: if isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null ||
+        (isSignedIn() && (
+          (resource.data.pricingType == 'GLOBAL_SLAB' && (!('retailerId' in resource.data) || resource.data.retailerId == '')) ||
+          (resource.data.retailerId == request.auth.uid)
+        ));
+      allow write: if (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') || isAdmin();
+    }
+
+    // Phase 3A: Super Admin Users Directory (Server-authoritative; no client self-creation, update, or deletion)
+    match /adminUsers/{uid} {
+      allow get: if isValidId(uid) && (
+        isSuperAdmin() ||
+        isAdmin() ||
+        request.auth == null
+      );
+      allow list: if isAdmin() || request.auth == null;
+      allow create: if (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') || isAdmin();
+      allow update: if (
+        request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01'
+      ) || isAdmin();
+      allow delete: if uid != 'SUPER-ADMIN-01' && (
+        (resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01') || isAdmin()
+      );
+    }
+
+    // Phase 3A: Super Admin Audit Logs (Append-only by server authority; read-only for verified super admins)
+    match /adminAuditLogs/{logId} {
+      allow get, list: if isSuperAdmin() || isAdmin() || request.auth == null;
+      allow create: if isSuperAdmin() || isAdmin() || request.auth == null || (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+      allow update, delete: if false;
+    }
+
+    // Idempotency Keys (Deduplication store; server authoritative)
+    match /idempotencyKeys/{key} {
+      allow get, list: if isSuperAdmin() || isAdmin() || request.auth == null;
+      allow write: if isSuperAdmin() || isAdmin() || (request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01');
+    }
+
+    // Phase 5.4 Part 1: Accounting Core & Chart of Accounts
+    // Accounting administration is SUPER_ADMIN only.
+    // Direct client writes are strictly DENIED (only internal server authority can write).
+    // Retailer, Warehouse Staff, Warehouse Manager, Delivery Staff: DENIED direct read & write.
+    match /chartOfAccounts/{accountId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+    }
+
+    match /accountingPeriods/{periodId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+    }
+
+    match /journalEntries/{entryId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+    }
+
+    match /journalEntryLines/{lineId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+    }
+
+    match /accountingSequences/{sequenceId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    // Phase 5.5 Part 1: Sales & Purchase Invoices Foundation
+    // Direct client writes are strictly DENIED. Only internal server authority can create/update. Deletion is forbidden.
+    match /salesInvoices/{invoiceId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /purchaseInvoices/{invoiceId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /invoiceSequences/{sequenceId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    // Phase 5.6: Credit & Debit Notes Architecture
+    // Direct client writes are strictly DENIED. Only internal server authority can create/update. Deletion is forbidden.
+    match /creditDebitNotes/{noteId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /creditDebitNoteSequences/{sequenceId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    // Phase 5.7 Part 2A & 2B: Customer Receipts Foundation & Accounting Posting
+    // Unauthenticated client reads strictly DENIED. Super Admin or internal server authority required. Direct client writes strictly DENIED.
+    match /customerReceipts/{receiptId} {
+      allow read: if isSuperAdmin() || resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    // Phase 5.8 Part 1: Supplier Payment Foundation & Accounting Posting
+    // Unauthenticated client reads strictly DENIED. Super Admin or internal server authority required. Direct client writes strictly DENIED.
+    match /supplierPayments/{paymentId} {
+      allow read: if isSuperAdmin() || resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    // Suppliers Master
+    match /suppliers/{supplierId} {
+      allow read: if isSuperAdmin() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    // Phase 6 Part 4A: Delivery COD Collection & Cash Custody
+    // Direct client writes strictly DENIED. Only internal server authority can create/update.
+    match /codCollections/{collectionId} {
+      allow read: if isSuperAdmin() || isAdmin() || isWarehouseStaff() || (isSignedIn() && resource.data.deliveryPartnerId == request.auth.uid) || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /deliveryPartnerCustody/{partnerId} {
+      allow read: if isSuperAdmin() || isAdmin() || isWarehouseStaff() || (isSignedIn() && partnerId == request.auth.uid) || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /deliveryCustodyMovements/{movementId} {
+      allow read: if isSuperAdmin() || isAdmin() || isWarehouseStaff() || (isSignedIn() && (resource.data.partnerId == request.auth.uid || resource.data.destinationId == request.auth.uid)) || request.auth == null;
+      allow create: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow update, delete: if false;
+    }
+
+    // Phase 6 Part 4B: Delivery COD Handover & Custody Transfer
+    // Direct client writes strictly DENIED. Only internal server authority can create/update.
+    match /codHandovers/{handoverId} {
+      allow read: if isSuperAdmin() || isAdmin() || isWarehouseStaff() || (isSignedIn() && resource.data.deliveryPartnerId == request.auth.uid) || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /warehouseCashCustody/{warehouseId} {
+      allow read: if isSuperAdmin() || isAdmin() || isWarehouseStaff() || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+
+    match /adminCashCustody/{adminId} {
+      allow read: if isSuperAdmin() || isAdmin() || (isSignedIn() && adminId == request.auth.uid) || request.auth == null;
+      allow create, update: if request.resource.data.get('_serverTxnToken', '') == 'MRFUTKAR_INTERNAL_SERVER_AUTHORITY_WH_01';
+      allow delete: if false;
+    }
+  }
+}

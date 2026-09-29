@@ -1,0 +1,67 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size <= 5 * 1024 * 1024; // 5 MB max
+    }
+
+    function isValidCustomerImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp)')
+        && request.resource.size <= 5 * 1024 * 1024; // 5 MB max
+    }
+
+    // Wholesale Product Media: Publicly readable for catalogue, writable only by admin/service
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Only admin/backend service
+    }
+
+    // Brand Media: Publicly readable, writable only by admin/service
+    match /brands/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Only admin/backend service
+    }
+
+    // Category Media: Publicly readable, writable only by admin/service
+    match /categories/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Only admin/backend service
+    }
+
+    // Retailer / Customer Profile Media: Retailers may upload only inside their own UID directory
+    match /retailers/{uid}/{allPaths=**} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || request.auth.token.role == 'admin');
+      allow create, update: if isOwner(uid) && isValidCustomerImage();
+      allow delete: if isOwner(uid);
+    }
+
+    // Customer Profile Media: Deterministic customerProfiles path
+    match /customerProfiles/{uid}/{allPaths=**} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || request.auth.token.role == 'admin');
+      allow create, update: if isOwner(uid) && isValidCustomerImage();
+      allow delete: if isOwner(uid);
+    }
+
+    // Proof of Delivery (POD) Media: Controlled order-specific path (Private delivery evidence)
+    match /orders/{orderId}/pod/{partnerId}/{allPaths=**} {
+      allow read: if isSignedIn() && (request.auth.uid == partnerId || request.auth.token.role in ['admin', 'SUPER_ADMIN', 'WAREHOUSE_STAFF', 'WAREHOUSE_MANAGER', 'WAREHOUSE_ADMIN']);
+      allow write: if isSignedIn() && request.auth.uid == partnerId && isValidImage();
+    }
+
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

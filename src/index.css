@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* PHASE 5.5 PART 4 — PROFESSIONAL INVOICE PRINT STYLES */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #1c1917 !important;
+    font-size: 10pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation, sidebars, headers, bottom tabs, notifications, action buttons */
+  nav,
+  aside,
+  header,
+  footer,
+  .no-print,
+  button:not(.allow-print),
+  .admin-sidebar,
+  .bottom-tabs,
+  [role="dialog"] > div > div.no-print {
+    display: none !important;
+  }
+
+  /* Printable container fits 100% width with no fixed heights or shadows */
+  .printable-invoice-document {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  .printable-invoice-document > div {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure tables and rows don't break awkwardly across pages */
+  table {
+    page-break-inside: auto;
+    width: 100% !important;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+}
